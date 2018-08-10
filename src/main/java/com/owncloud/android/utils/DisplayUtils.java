@@ -482,6 +482,38 @@ public class DisplayUtils {
      */
     public static void setAvatar(@NonNull Account account, @NonNull String userId, Context context, Object view,
                                  float radius) {
+        Drawable placeholder = context.getResources().getDrawable(R.drawable.ic_user);
+
+        Drawable fallback;
+        try {
+            fallback = TextDrawable.createAvatar(account.name, radius);
+        } catch (NoSuchAlgorithmException e) {
+            fallback = placeholder;
+        }
+
+        // show avatar immediately, might be outdated
+        if (view instanceof ImageView) {
+            ImageView imageView = (ImageView) view;
+            imageView.setContentDescription(account.name);
+
+            GlideApp.with(context)
+                    .asBitmap()
+                    .load(new GlideAvatar(GlideKey.avatar(account, userId, context), null))
+                    .apply(RequestOptions.circleCropTransform())
+                    .placeholder(placeholder)
+                    .error(fallback)
+                    .onlyRetrieveFromCache(true)
+                    .into(imageView);
+        } else {
+            GlideApp.with(context)
+                    .load(new GlideAvatar(GlideKey.avatar(account, userId, context), null))
+                    .apply(RequestOptions.circleCropTransform())
+                    .placeholder(placeholder)
+                    .error(fallback)
+                    .onlyRetrieveFromCache(true)
+                    .into((SimpleTarget<Drawable>) view);
+        }
+        
         AsyncTask task = new AsyncTask<Object, Void, InputStream>() {
 
             GetMethod get = null;
@@ -739,23 +771,6 @@ public class DisplayUtils {
         return client.getBaseUri() + "/index.php/apps/files_trashbin/preview?fileId=" +
                 file.getLocalId() + "&x=" + size + "&y=" + size;
     }
-
-//    public static void showResizedImage(String uri, Drawable placeholder, Drawable error, ImageView view, OwnCloudClient client,
-//                                     Key key, Context context) {
-//        
-//        
-//        GlideContainer container = new GlideContainer();
-//
-//        container.url = uri;
-//        container.key = key;
-//        container.client = client;
-//
-//        GlideApp.with(context)
-//                .load(container)
-//                .placeholder(placeholder)
-//                .error(error)
-//                .into(view);
-//    }
 
     public static void downloadImage(String uri, int placeholder, int error, SimpleTarget<Drawable> target, Key key,
                                      Context context) {
